@@ -1,0 +1,84 @@
+{
+	"info": {
+		"_postman_id": "63c3ac58-4bc6-4cb0-b6dc-e21a892f7ce3",
+		"name": "Tron Wallet API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24746326"
+	},
+	"item": [
+		{
+			"name": "Create Wallet",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/wallet/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"wallet",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get balance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/getbalance/?private_key=7edb3966a9f094ec53b3a78643daf198bd893041baa3b9a6fdef777af32eb430&address=TRrvYCnWP5TDbJdjSrS4a2zEKDhoxi1sn2",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"getbalance",
+						""
+					],
+					"query": [
+						{
+							"key": "private_key",
+							"value": "7edb3966a9f094ec53b3a78643daf198bd893041baa3b9a6fdef777af32eb430"
+						},
+						{
+							"key": "address",
+							"value": "TRrvYCnWP5TDbJdjSrS4a2zEKDhoxi1sn2"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
