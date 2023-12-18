@@ -7,12 +7,16 @@ from hdwallet.utils import generate_entropy
 from hdwallet.symbols import TRX as SYMBOL
 from typing import Optional
 import json
-from tronapi import Tron
+# from tronapi import Tron
 from rest_framework.response import Response
 from rest_framework import status
+from .models import TronAccount
+from django.http import JsonResponse
 
 
-class WalletListCreateView(generics.ListCreateAPIView):
+
+
+class CreateWallet(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Choose strength 128, 160, 192, 224 or 256
         STRENGTH: int = 160  # Default is 128
@@ -41,33 +45,47 @@ class WalletListCreateView(generics.ListCreateAPIView):
 
 class WalletBalance(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
-
-        private_key = request.data.get('private_key')
-        address = request.data.get('address')
-        
-        print(private_key)
-        print(address)
-
-        # Initialize the Tron object
-        tron = Tron()
-
         try:
+            url = "https://api.shasta.trongrid.io/wallet/getaccount"
+            payload = {
+                "address": request.data.get('address'),
+                "visible": True
+            }
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json"
+            }
 
-            # Set your private key
-            tron.private_key = private_key
-            tron.default_address = address
-
-            # Get the balance
-            balance = tron.trx.get_balance()
-        
-            print(f'The balance is: {balance / 10 ** 6} TRX')
+            response = requests.post(url, json=payload, headers=headers)
+            data = response.json()
             
-            return Response({
-                "balance": balance / 10 ** 6,
-            }, status=status.HTTP_201_CREATED)
+            if data == {}:
+                return Response({
+                    "balance": 0,
+                }, status=status.HTTP_200_OK)
             
+            try:
+                tron_account = TronAccount.objects.create(
+                    address=data["address"],
+                    balance=data["balance"],
+                    create_time=data["create_time"],
+                    net_window_size=data["net_window_size"],
+                    net_window_optimized=data["net_window_optimized"],
+                )
+                
+                try:
+                    return Response({
+                        "balance": tron_account.balance,
+                    }, status=status.HTTP_200_OK)
+                except Exception as e:
+                    return Response({
+                        "message": f"Data Can't send: {e}",
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "message": f"Data Can't save: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(e)
             return Response({
-                "message": "Error",
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
