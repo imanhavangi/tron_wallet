@@ -14,10 +14,8 @@ from .models import TronAccount
 from django.http import JsonResponse
 from .models import Trc20Data
 from .serializers import Trc20DataSerializer
-
-
-
-
+from .models import TransactionData
+from .serializers import TransactionDataSerializer
 
 class CreateWallet(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
@@ -102,12 +100,12 @@ class AllContractBalance(generics.ListCreateAPIView):
             }
             response = requests.get(url, headers=headers)
             data = response.json()
-            print(data)
+            # print(data)
             trc20_data = data.get("data")[0].get("trc20")
             
             if data == {}:
                 return Response({
-                    "balance": 0,
+                    []
                 }, status=status.HTTP_200_OK)
             
             try:
@@ -131,3 +129,64 @@ class AllContractBalance(generics.ListCreateAPIView):
                 "message": f"Data Can't recieve: {e}",
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class AllTransactions(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20"
+            headers = {
+                "accept": "application/json",
+            }
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            # print(data)
+            transaction_data = data.get("data")
+            print(transaction_data)
+            
+            if data == {}:
+                return Response({
+                    "balance": 0,
+                }, status=status.HTTP_200_OK)
+            
+            try:
+                for item in transaction_data:
+                    transaction_id = item['transaction_id']
+                    symbol = item['token_info']['symbol']
+                    address = item['token_info']['address']
+                    decimals = item['token_info']['decimals']
+                    name = item['token_info']['name']
+                    block_timestamp = item['block_timestamp']
+                    _from = item['from']
+                    _to = item['to']
+                    _type = item['type']
+                    value = item['value']
+                    
+                    if not TransactionData.objects.filter(transaction_id=transaction_id).exists():
+                        TransactionData.objects.create(
+                            transaction_id = transaction_id,
+                            token_symbol = symbol,
+                            token_address = address,
+                            token_decimals = int(decimals),
+                            token_name = name,
+                            block_timestamp = block_timestamp,
+                            from_address = _from,
+                            to_address = _to,
+                            transaction_type = _type,
+                            value = value
+                        )
+
+                transaction_data_object = TransactionData.objects.all()
+                serializer = TransactionDataSerializer(transaction_data_object, many=True)
+                try:
+                    return JsonResponse(serializer.data, safe=False)
+                except Exception as e:
+                    return Response({
+                        "message": f"Data Can't send: {e}",
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "message": f"Data Can't save: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
