@@ -12,6 +12,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import TronAccount
 from django.http import JsonResponse
+from .models import Trc20Data
+from .serializers import Trc20DataSerializer
+
 
 
 
@@ -46,7 +49,7 @@ class CreateWallet(generics.ListCreateAPIView):
 class WalletBalance(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         try:
-            url = "https://api.shasta.trongrid.io/wallet/getaccount"
+            url = "https://api.trongrid.io/wallet/getaccount"
             payload = {
                 "address": request.data.get('address'),
                 "visible": True
@@ -89,3 +92,42 @@ class WalletBalance(generics.ListCreateAPIView):
             return Response({
                 "message": f"Data Can't recieve: {e}",
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class AllContractBalance(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}"
+            headers = {
+                "accept": "application/json",
+            }
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            print(data)
+            trc20_data = data.get("data")[0].get("trc20")
+            
+            if data == {}:
+                return Response({
+                    "balance": 0,
+                }, status=status.HTTP_200_OK)
+            
+            try:
+                for item in trc20_data:
+                    for contract_address, count in item.items():
+                        Trc20Data.objects.create(contract_address=contract_address, count=int(count))
+                trc20_data_object = Trc20Data.objects.all()
+                serializer = Trc20DataSerializer(trc20_data_object, many=True)
+                try:
+                    return JsonResponse(serializer.data, safe=False)
+                except Exception as e:
+                    return Response({
+                        "message": f"Data Can't send: {e}",
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "message": f"Data Can't save: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
