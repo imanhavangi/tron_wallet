@@ -90,11 +90,24 @@
 		},
 		{
 			"name": "All Transactions",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "address",
+							"value": "TNPeeaaFB7K9cmo4uQpcU32zGK8G1NYqeL",
+							"type": "text"
+						}
+					]
+				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/api/getAllTransactions/",
+					"raw": "http://127.0.0.1:8000/api/getAllTransfers/",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -105,7 +118,49 @@
 					"port": "8000",
 					"path": [
 						"api",
-						"getAllTransactions",
+						"getAllTransfers",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "All Contract Transfers",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "address",
+							"value": "TNPeeaaFB7K9cmo4uQpcU32zGK8G1NYqeL",
+							"type": "text"
+						},
+						{
+							"key": "contract_address",
+							"value": "TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/getAllContractTransfers/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"getAllContractTransfers",
 						""
 					]
 				}

@@ -14,7 +14,9 @@ from .models import TronAccount
 from django.http import JsonResponse
 from .models import Trc20Data
 from .serializers import Trc20DataSerializer
+from .models import TransferData
 from .models import TransactionData
+from .serializers import TransferDataSerializer
 from .serializers import TransactionDataSerializer
 
 class CreateWallet(generics.ListCreateAPIView):
@@ -131,8 +133,9 @@ class AllContractBalance(generics.ListCreateAPIView):
         
 class AllTransactions(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
+        TransactionData.objects.all().delete()
         try:
-            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20"
+            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions"
             headers = {
                 "accept": "application/json",
             }
@@ -140,7 +143,6 @@ class AllTransactions(generics.ListCreateAPIView):
             data = response.json()
             # print(data)
             transaction_data = data.get("data")
-            print(transaction_data)
             
             if data == {}:
                 return Response({
@@ -149,6 +151,93 @@ class AllTransactions(generics.ListCreateAPIView):
             
             try:
                 for item in transaction_data:
+                    contractRet = item['ret'][0]['contractRet']
+                    fee = item['ret'][0]['fee']
+                    signature = item['signature'][0]
+                    txID = item['txID']
+                    net_usage = item['net_usage']
+                    raw_data_hex = item['raw_data_hex']
+                    net_fee = item['net_fee']
+                    energy_usage = item['energy_usage']
+                    blockNumber = item['blockNumber']
+                    block_timestamp = item['block_timestamp']
+                    energy_fee = item['energy_fee']
+                    energy_usage_total = item['energy_usage_total']
+                    # amount = item['raw_data']['contract'][0]['parameter']['value']['amount']
+                    owner_address = item['raw_data']['contract'][0]['parameter']['value']['owner_address']
+                    # to_address = item['raw_data']['contract'][0]['parameter']['value']['to_address']
+                    type_url = item['raw_data']['contract'][0]['parameter']['type_url']
+                    _type = item['raw_data']['contract'][0]['type']
+                    ref_block_bytes = item['raw_data']['ref_block_bytes']
+                    ref_block_hash = item['raw_data']['ref_block_hash']
+                    expiration = item['raw_data']['expiration']
+                    timestamp = item['raw_data']['timestamp']
+                    
+                    if not TransactionData.objects.filter(txID=txID).exists():
+                        TransactionData.objects.create(
+                            contractRet = contractRet,
+                            fee = fee,
+                            signature = signature,
+                            txID = txID,
+                            net_usage = net_usage,
+                            raw_data_hex = raw_data_hex,
+                            net_fee = net_fee,
+                            energy_usage = energy_usage,
+                            blockNumber = blockNumber,
+                            block_timestamp = block_timestamp,
+                            energy_fee = energy_fee,
+                            energy_usage_total = energy_usage_total,
+                            # amount = amount,
+                            owner_address = owner_address,
+                            # to_address = to_address,
+                            type_url = type_url,
+                            _type = _type,
+                            ref_block_bytes = ref_block_bytes,
+                            ref_block_hash = ref_block_hash,
+                            expiration = expiration,
+                            timestamp = timestamp
+                        )
+
+                transaction_data_object = TransactionData.objects.all()
+                serializer = TransactionDataSerializer(transaction_data_object, many=True)
+                try:
+                    return JsonResponse(serializer.data, safe=False)
+                except Exception as e:
+                    return Response({
+                        "message": f"Data Can't send: {e}",
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "message": f"Data Can't save: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class AllContractTransfers(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        TransferData.objects.all().delete()
+        try:
+            contract_address = request.data.get('contract_address', None)
+            if contract_address:
+                url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20?contract_address={request.data.get('contract_address')}"
+            else:
+                url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20"
+            headers = {
+                "accept": "application/json",
+            }
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            transfer_data = data.get("data")
+            
+            if data == {}:
+                return Response({
+                    "balance": 0,
+                }, status=status.HTTP_200_OK)
+            
+            try:
+                for item in transfer_data:
                     transaction_id = item['transaction_id']
                     symbol = item['token_info']['symbol']
                     address = item['token_info']['address']
@@ -159,9 +248,8 @@ class AllTransactions(generics.ListCreateAPIView):
                     _to = item['to']
                     _type = item['type']
                     value = item['value']
-                    
-                    if not TransactionData.objects.filter(transaction_id=transaction_id).exists():
-                        TransactionData.objects.create(
+                    if not TransferData.objects.filter(transaction_id=transaction_id).exists():
+                        TransferData.objects.create(
                             transaction_id = transaction_id,
                             token_symbol = symbol,
                             token_address = address,
@@ -174,8 +262,8 @@ class AllTransactions(generics.ListCreateAPIView):
                             value = value
                         )
 
-                transaction_data_object = TransactionData.objects.all()
-                serializer = TransactionDataSerializer(transaction_data_object, many=True)
+                transfer_data_object = TransferData.objects.all()
+                serializer = TransferDataSerializer(transfer_data_object, many=True)
                 try:
                     return JsonResponse(serializer.data, safe=False)
                 except Exception as e:
