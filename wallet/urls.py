@@ -6,6 +6,9 @@ from .views import AllContractBalance
 from .views import AllTransactions
 from .views import AllContractTransfers
 from .views import CreateTransaction
+from .views import TransactionInfo
+from .views import CalculateFee
+from .views import CalculateFee
 
 urlpatterns = [
     path('wallet/', CreateWallet.as_view(), name='create-wallet'),
@@ -14,4 +17,6 @@ urlpatterns = [
     path('getAllTransactions/', AllTransactions.as_view(), name='get-all-transactions'),
     path('getAllContractTransfers/', AllContractTransfers.as_view(), name='get-all-contract-transfers'),
     path('createTransaction/', CreateTransaction.as_view(), name='create-transaction'),
+    path('transactionInfo/', TransactionInfo.as_view(), name='transaction-info'),
+    path('calculateFee/', CalculateFee.as_view(), name='calculate-fee'),
 ]

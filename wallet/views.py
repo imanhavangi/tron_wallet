@@ -19,6 +19,8 @@ from .models import TransactionData
 from .serializers import TransferDataSerializer
 from .serializers import TransactionDataSerializer
 from tronapi import Tron
+import base64
+
 
 class CreateWallet(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
@@ -38,6 +40,7 @@ class CreateWallet(generics.ListCreateAPIView):
         hdwallet.from_path("m/44'/195'/0'/0/0")
         
         walletjson = hdwallet.dumps()
+        print(walletjson)
         
         tron_address = walletjson['addresses']['p2pkh']
         private_key = walletjson['private_key']
@@ -292,7 +295,6 @@ class CreateTransaction(generics.ListCreateAPIView):
             tron_address = request.data.get('tron_address')
             to_address = request.data.get('to_address')
             amount = float(request.data.get('amount'))
-            # amount to float
             
             sender_balance = tron.trx.get_balance(tron_address)
             # estimated_fee = tron.trx.get_transaction_fee({})
@@ -301,7 +303,6 @@ class CreateTransaction(generics.ListCreateAPIView):
             #     return {'error': 'Insufficient balance'}
             
             transaction = tron.transaction_builder.send_transaction(to_address, amount, tron_address)
-            print('as')
             if transaction:
                 return Response({
                     "message": "Transaction Successful",
@@ -310,6 +311,73 @@ class CreateTransaction(generics.ListCreateAPIView):
             else:
                 return Response({
                     "message": "Transaction Failed",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class TransactionInfo(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            tron = Tron(
+                full_node="https://api.shasta.trongrid.io",
+                solidity_node="https://api.shasta.trongrid.io",
+                event_server="https://api.shasta.trongrid.io",
+            )
+            txID = request.data.get('txID')
+            print(txID)
+            info = tron.trx.get_transaction_info(txID)
+            print(info)
+            if info:
+                return Response({
+                    "message": "Successfully fetched data",
+                    "data": dict(info),
+                    })
+            else:
+                return Response({
+                    "message": "failed to fetch data",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class CalculateFee(generics.ListCreateAPIView):
+    def free_net_usage(request):
+        url = "https://api.trongrid.io/wallet/getaccountresource"
+        payload = {
+            "address": request.data.get('address'),
+            "visible": True
+        }
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json"
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        data = response.json()
+        try:
+            return int(data["freeNetLimit"])-int(data['freeNetUsed'])
+        except:
+            return 0
+    def get(self, request, *args, **kwargs):
+        try:
+            # byte_array = base64.b16decode(request.data.get('rawdatahex'))
+            print('sa')
+            byte_array_length = len(request.data.get('rawdatahex'))
+            bandwidth_points_balance = CalculateFee.free_net_usage(request)
+            bandwidth_points_consumption = byte_array_length
+            bandwidth_points_unit_price = 1000 # SUN
+            transaction_fee = max(0, bandwidth_points_consumption - bandwidth_points_balance) * bandwidth_points_unit_price / 1000000 # TRX
+            try:
+                return Response({
+                    "message": "Successfully get fee",
+                    "fee": transaction_fee,
+                    })
+            except Exception as e:
+                return Response({
+                    "message": f"Data Can't send: {e}",
                 }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
