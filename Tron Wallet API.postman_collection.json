@@ -166,6 +166,135 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Create Transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "tron_address",
+							"value": "TNPeeaaFB7K9cmo4uQpcU32zGK8G1NYqeL",
+							"type": "text"
+						},
+						{
+							"key": "to_address",
+							"value": "TU2zpjCg9S9ZnZdxg2mQWeWKnCMmcee9KX",
+							"type": "text"
+						},
+						{
+							"key": "amount",
+							"value": "0.000001",
+							"type": "text"
+						},
+						{
+							"key": "private_key",
+							"value": "",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/createTransaction/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"createTransaction",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Transaction info",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "txID",
+							"value": "bf3004031b2b1abed720fdf57a7a1c2e764ac62f283a33eb0e340e8b85426ffb",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/transactionInfo/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"transactionInfo",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Calculate Fee",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "rawdatahex",
+							"value": "0a02b83022083c7f21231ff8e62140b8fcf7b8c8315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a15418840e6c55b9ada326d211d818c34a994aeced808121541c629c31e1a3283a883ae597308bde9b809146ce5180170b2aff4b8c831",
+							"type": "text"
+						},
+						{
+							"key": "address",
+							"value": "418840e6c55b9ada326d211d818c34a994aeced808",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/calculateFee/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"calculateFee",
+						""
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
