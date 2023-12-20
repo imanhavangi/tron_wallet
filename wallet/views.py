@@ -18,6 +18,7 @@ from .models import TransferData
 from .models import TransactionData
 from .serializers import TransferDataSerializer
 from .serializers import TransactionDataSerializer
+from tronapi import Tron
 
 class CreateWallet(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
@@ -273,6 +274,42 @@ class AllContractTransfers(generics.ListCreateAPIView):
             except Exception as e:
                 return Response({
                     "message": f"Data Can't save: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class CreateTransaction(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            tron = Tron(
+                full_node="https://api.shasta.trongrid.io",
+                solidity_node="https://api.shasta.trongrid.io",
+                event_server="https://api.shasta.trongrid.io",
+            )
+            # tron.private_key = request.data.get('private_key')
+            tron_address = request.data.get('tron_address')
+            to_address = request.data.get('to_address')
+            amount = float(request.data.get('amount'))
+            # amount to float
+            
+            sender_balance = tron.trx.get_balance(tron_address)
+            # estimated_fee = tron.trx.get_transaction_fee({})
+            # total_amount = amount + estimated_fee['fee']
+            # if sender_balance < total_amount:
+            #     return {'error': 'Insufficient balance'}
+            
+            transaction = tron.transaction_builder.send_transaction(to_address, amount, tron_address)
+            print('as')
+            if transaction:
+                return Response({
+                    "message": "Transaction Successful",
+                    "transaction": dict(transaction)
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "message": "Transaction Failed",
                 }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
