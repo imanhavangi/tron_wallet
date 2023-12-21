@@ -295,6 +295,48 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Sign Transaction",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "txID",
+							"value": "0951c106575c3467ee6d42aa8bf9e1cf62c21717bd9bb450f6ef40ad48327b28",
+							"type": "text"
+						},
+						{
+							"key": "private_key",
+							"value": "sdfsdfdsssdasdasdasd",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/signTransaction/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"signTransaction",
+						""
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

@@ -16,8 +16,10 @@ from .models import Trc20Data
 from .serializers import Trc20DataSerializer
 from .models import TransferData
 from .models import TransactionData
+from .models import TempTransaction
 from .serializers import TransferDataSerializer
 from .serializers import TransactionDataSerializer
+from .serializers import TempTransactionSerializer
 from tronapi import Tron
 import base64
 
@@ -292,18 +294,23 @@ class CreateTransaction(generics.ListCreateAPIView):
                 event_server="https://api.shasta.trongrid.io",
             )
             # tron.private_key = request.data.get('private_key')
-            tron_address = request.data.get('tron_address')
+            owner_address = request.data.get('owner_address')
             to_address = request.data.get('to_address')
             amount = float(request.data.get('amount'))
             
-            sender_balance = tron.trx.get_balance(tron_address)
+            sender_balance = tron.trx.get_balance(owner_address)
             # estimated_fee = tron.trx.get_transaction_fee({})
             # total_amount = amount + estimated_fee['fee']
             # if sender_balance < total_amount:
             #     return {'error': 'Insufficient balance'}
             
-            transaction = tron.transaction_builder.send_transaction(to_address, amount, tron_address)
+            transaction = tron.transaction_builder.send_transaction(to_address, amount, owner_address)
+            
             if transaction:
+                if not TempTransaction.objects.filter(transaction=transaction).exists():
+                    TempTransaction.objects.create(
+                    transaction = transaction
+                )
                 return Response({
                     "message": "Transaction Successful",
                     "transaction": dict(transaction)
@@ -378,6 +385,42 @@ class CalculateFee(generics.ListCreateAPIView):
             except Exception as e:
                 return Response({
                     "message": f"Data Can't send: {e}",
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message": f"Data Can't recieve: {e}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class SignTransaction(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            tron = Tron(
+                full_node="https://api.shasta.trongrid.io",
+                solidity_node="https://api.shasta.trongrid.io",
+                event_server="https://api.shasta.trongrid.io",
+            )
+            private_key = request.data.get('private_key')
+            tron.private_key = private_key
+            txID = request.data.get('txID')
+
+            # get TempTransaction object that object['txID'] == txID and
+            # get transaction from that object
+            transaction = TempTransaction.objects.get(transaction__txID=txID)
+            serializer = TempTransactionSerializer(transaction)
+            print(serializer.data.get('transaction'))
+            
+            #sign
+            signedtransaction = tron.trx.sign(serializer.data.get('transaction'))
+            print(signedtransaction)
+            
+            if signedtransaction:
+                return Response({
+                    "message": "Successfully signed transaction",
+                    "transaction": dict(signedtransaction)
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "message": "Transaction Failed",
                 }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({

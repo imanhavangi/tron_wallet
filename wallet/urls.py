@@ -8,7 +8,7 @@ from .views import AllContractTransfers
 from .views import CreateTransaction
 from .views import TransactionInfo
 from .views import CalculateFee
-from .views import CalculateFee
+from .views import SignTransaction
 
 urlpatterns = [
     path('wallet/', CreateWallet.as_view(), name='create-wallet'),
@@ -19,4 +19,5 @@ urlpatterns = [
     path('createTransaction/', CreateTransaction.as_view(), name='create-transaction'),
     path('transactionInfo/', TransactionInfo.as_view(), name='transaction-info'),
     path('calculateFee/', CalculateFee.as_view(), name='calculate-fee'),
+    path('signTransaction/', SignTransaction.as_view(), name='sign-transaction'),
 ]

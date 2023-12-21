@@ -50,3 +50,5 @@ class TransferData(models.Model):
     transaction_type = models.CharField(max_length=255)
     value = models.CharField(max_length=255)
     
+class TempTransaction(models.Model):
+    transaction = models.JSONField()
