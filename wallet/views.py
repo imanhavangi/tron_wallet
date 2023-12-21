@@ -76,7 +76,7 @@ class WalletBalance(generics.ListCreateAPIView):
             try:
                 tron_account = TronAccount.objects.create(
                     address=data["address"],
-                    balance=data["balance"],
+                    balance=data["balance"] / 10**6 ,
                     create_time=data["create_time"],
                     net_window_size=data["net_window_size"],
                     net_window_optimized=data["net_window_optimized"],
@@ -102,7 +102,7 @@ class WalletBalance(generics.ListCreateAPIView):
 class AllContractBalance(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         try:
-            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}"
+            url = f"https://api.trongrid.io/v1/accounts/{request.data.get('address')}"
             headers = {
                 "accept": "application/json",
             }
@@ -141,7 +141,7 @@ class AllTransactions(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         TransactionData.objects.all().delete()
         try:
-            url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions"
+            url = f"https://api.trongrid.io/v1/accounts/{request.data.get('address')}/transactions"
             headers = {
                 "accept": "application/json",
             }
@@ -227,9 +227,9 @@ class AllContractTransfers(generics.ListCreateAPIView):
         try:
             contract_address = request.data.get('contract_address', None)
             if contract_address:
-                url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20?contract_address={request.data.get('contract_address')}"
+                url = f"https://api.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20?contract_address={request.data.get('contract_address')}"
             else:
-                url = f"https://api.shasta.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20"
+                url = f"https://api.trongrid.io/v1/accounts/{request.data.get('address')}/transactions/trc20"
             headers = {
                 "accept": "application/json",
             }
@@ -289,9 +289,9 @@ class CreateTransaction(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         try:
             tron = Tron(
-                full_node="https://api.shasta.trongrid.io",
-                solidity_node="https://api.shasta.trongrid.io",
-                event_server="https://api.shasta.trongrid.io",
+                full_node="https://api.trongrid.io",
+                solidity_node="https://api.trongrid.io",
+                event_server="https://api.trongrid.io",
             )
             # tron.private_key = request.data.get('private_key')
             owner_address = request.data.get('owner_address')
@@ -328,9 +328,9 @@ class TransactionInfo(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         try:
             tron = Tron(
-                full_node="https://api.shasta.trongrid.io",
-                solidity_node="https://api.shasta.trongrid.io",
-                event_server="https://api.shasta.trongrid.io",
+                full_node="https://api.trongrid.io",
+                solidity_node="https://api.trongrid.io",
+                event_server="https://api.trongrid.io",
             )
             txID = request.data.get('txID')
             print(txID)
@@ -395,9 +395,9 @@ class SignTransaction(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         try:
             tron = Tron(
-                full_node="https://api.shasta.trongrid.io",
-                solidity_node="https://api.shasta.trongrid.io",
-                event_server="https://api.shasta.trongrid.io",
+                full_node="https://api.trongrid.io",
+                solidity_node="https://api.trongrid.io",
+                event_server="https://api.trongrid.io",
             )
             private_key = request.data.get('private_key')
             tron.private_key = private_key
@@ -407,16 +407,16 @@ class SignTransaction(generics.ListCreateAPIView):
             # get transaction from that object
             transaction = TempTransaction.objects.get(transaction__txID=txID)
             serializer = TempTransactionSerializer(transaction)
-            print(serializer.data.get('transaction'))
             
             #sign
             signedtransaction = tron.trx.sign(serializer.data.get('transaction'))
             print(signedtransaction)
+            result = tron.trx.broadcast(signedtransaction)
             
-            if signedtransaction:
+            if result:
                 return Response({
                     "message": "Successfully signed transaction",
-                    "transaction": dict(signedtransaction)
+                    "transaction": dict(result)
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
